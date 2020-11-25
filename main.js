@@ -1,6 +1,7 @@
-var http = require("http");
-var fs = require("fs");
-var url = require("url");
+let http = require("http");
+let fs = require("fs");
+let url = require("url");
+let qs = require("querystring");
 
 function templateHTML(title, list, body) {
   return `
@@ -21,8 +22,8 @@ function templateHTML(title, list, body) {
 }
 
 function templateList(filelist) {
-  var list = "<ul>";
-  var i = 0;
+  let list = "<ul>";
+  let i = 0;
   while (i < filelist.length) {
     list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
     i += 1;
@@ -31,22 +32,22 @@ function templateList(filelist) {
   return list;
 }
 
-var app = http.createServer(function (request, response) {
+let app = http.createServer(function (request, response) {
   if (request.url === "/favicon.ico") {
     response.writeHead(200, { "Content-Type": "image/x-icon" });
     return response.end();
   }
-  var _url = request.url;
-  var queryData = url.parse(_url, true).query;
-  var pathname = url.parse(_url, true).pathname;
+  let _url = request.url;
+  let queryData = url.parse(_url, true).query;
+  let pathname = url.parse(_url, true).pathname;
 
   if (pathname === "/") {
     if (queryData.id === undefined) {
       fs.readdir("./data", function (error, filelist) {
-        var title = "Welcome";
-        var description = "Hello, Node.js";
-        var list = templateList(filelist);
-        var template = templateHTML(
+        let title = "Welcome";
+        let description = "Hello, Node.js";
+        let list = templateList(filelist);
+        let template = templateHTML(
           title,
           list,
           `<h2>${title}</h2>${description}`
@@ -60,9 +61,9 @@ var app = http.createServer(function (request, response) {
           `data/${queryData.id}`,
           "UTF-8",
           function (err, description) {
-            var title = queryData.id;
-            var list = templateList(filelist);
-            var template = templateHTML(
+            let title = queryData.id;
+            let list = templateList(filelist);
+            let template = templateHTML(
               title,
               list,
               `<h2>${title}</h2>${description}`
@@ -75,13 +76,13 @@ var app = http.createServer(function (request, response) {
     }
   } else if (pathname === "/create") {
     fs.readdir("./data", function (error, filelist) {
-      var title = "WEB - create";
-      var list = templateList(filelist);
-      var template = templateHTML(
+      let title = "WEB - create";
+      let list = templateList(filelist);
+      let template = templateHTML(
         title,
         list,
         `
-        <form action="http://localhost:3000/process_create" method="post">
+        <form action="http://localhost:3000/create_process" method="post">
           <p><input type="text" name="title" placeholder="title" /></p>
           <p>
             <textarea name="description" placeholder="description"></textarea>
@@ -95,6 +96,19 @@ var app = http.createServer(function (request, response) {
       response.writeHead(200);
       response.end(template);
     });
+  } else if (pathname === "/create_process") {
+    let body = "";
+    request.on("data", function (data) {
+      body += data;
+    });
+    request.on("end", function () {
+      let post = qs.parse(body);
+      let title = post.title;
+      let description = post.description;
+      console.log(title, description);
+    });
+    response.writeHead(200);
+    response.end("success");
   } else {
     response.writeHead(404);
     response.end("Not found");
