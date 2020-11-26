@@ -139,6 +139,23 @@ let app = http.createServer(function (request, response) {
         response.end(template);
       });
     });
+  } else if (pathname === "/update_process") {
+    let body = "";
+    request.on("data", function (data) {
+      body += data;
+    });
+    request.on("end", function () {
+      let post = qs.parse(body);
+      let id = post.id;
+      let title = post.title;
+      let description = post.description;
+      fs.rename(`data/${id}`, `data/${title}`, function (error) {
+        fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
+          response.writeHead(302, { Location: `/?id=${title}` });
+          response.end();
+        });
+      });
+    });
   } else {
     response.writeHead(404);
     response.end("Not found");
