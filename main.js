@@ -3,7 +3,7 @@ let fs = require("fs");
 let url = require("url");
 let qs = require("querystring");
 
-function templateHTML(title, list, body) {
+function templateHTML(title, list, body, control) {
   return `
     <!DOCTYPE html>
   <html>
@@ -14,7 +14,7 @@ function templateHTML(title, list, body) {
     <body>
       <h1><a href="/">WEB</a></h1>
       ${list}
-      <a href="/create">create</a>
+      ${control}
       ${body}
     </body>
   </html>
@@ -50,7 +50,8 @@ let app = http.createServer(function (request, response) {
         let template = templateHTML(
           title,
           list,
-          `<h2>${title}</h2>${description}`
+          `<h2>${title}</h2>${description}`,
+          `<a href="/create">create</a>`
         );
         response.writeHead(200);
         response.end(template);
@@ -66,7 +67,8 @@ let app = http.createServer(function (request, response) {
             let template = templateHTML(
               title,
               list,
-              `<h2>${title}</h2>${description}`
+              `<h2>${title}</h2>${description}`,
+              `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`
             );
             response.writeHead(200);
             response.end(template);
@@ -91,7 +93,8 @@ let app = http.createServer(function (request, response) {
             <input type="submit"/>
           </p>
         </form>
-        `
+        `,
+        " "
       );
       response.writeHead(200);
       response.end(template);
