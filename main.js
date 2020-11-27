@@ -3,34 +3,35 @@ let fs = require("fs");
 let url = require("url");
 let qs = require("querystring");
 
-function templateHTML(title, list, body, control) {
-  return `
-    <!DOCTYPE html>
-  <html>
-    <head>
-      <title>WEB1 - ${title}</title>
-      <meta charset="utf-8" />
-    </head>
-    <body>
-      <h1><a href="/">WEB</a></h1>
-      ${list}
-      ${control}
-      ${body}
-    </body>
-  </html>
-  `;
-}
-
-function templateList(filelist) {
-  let list = "<ul>";
-  let i = 0;
-  while (i < filelist.length) {
-    list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-    i += 1;
+let template = {
+  HTML: function (title, list, body, control) {
+    return `
+      <!DOCTYPE html>
+    <html>
+      <head>
+        <title>WEB1 - ${title}</title>
+        <meta charset="utf-8" />
+      </head>
+      <body>
+        <h1><a href="/">WEB</a></h1>
+        ${list}
+        ${control}
+        ${body}
+      </body>
+    </html>
+    `;
+  },
+  list: function (filelist) {
+    let list = "<ul>";
+    let i = 0;
+    while (i < filelist.length) {
+      list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
+      i += 1;
+    }
+    list += "</ul>";
+    return list;
   }
-  list += "</ul>";
-  return list;
-}
+};
 
 let app = http.createServer(function (request, response) {
   if (request.url === "/favicon.ico") {
@@ -46,15 +47,16 @@ let app = http.createServer(function (request, response) {
       fs.readdir("./data", function (error, filelist) {
         let title = "Welcome";
         let description = "Hello, Node.js";
-        let list = templateList(filelist);
-        let template = templateHTML(
+
+        let list = template.list(filelist);
+        let html = template.HTML(
           title,
           list,
           `<h2>${title}</h2>${description}`,
           `<a href="/create">create</a>`
         );
         response.writeHead(200);
-        response.end(template);
+        response.end(html);
       });
     } else {
       fs.readdir("./data", function (error, filelist) {
@@ -63,8 +65,8 @@ let app = http.createServer(function (request, response) {
           "UTF-8",
           function (err, description) {
             let title = queryData.id;
-            let list = templateList(filelist);
-            let template = templateHTML(
+            let list = template.list(filelist);
+            let html = template.HTML(
               title,
               list,
               `<h2>${title}</h2>${description}`,
@@ -77,7 +79,7 @@ let app = http.createServer(function (request, response) {
               `
             );
             response.writeHead(200);
-            response.end(template);
+            response.end(html);
           }
         );
       });
@@ -85,8 +87,8 @@ let app = http.createServer(function (request, response) {
   } else if (pathname === "/create") {
     fs.readdir("./data", function (error, filelist) {
       let title = "WEB - create";
-      let list = templateList(filelist);
-      let template = templateHTML(
+      let list = template.list(filelist);
+      let html = template.HTML(
         title,
         list,
         `
@@ -103,7 +105,7 @@ let app = http.createServer(function (request, response) {
         " "
       );
       response.writeHead(200);
-      response.end(template);
+      response.end(html);
     });
   } else if (pathname === "/create_process") {
     let body = "";
@@ -123,8 +125,8 @@ let app = http.createServer(function (request, response) {
     fs.readdir("./data", function (error, filelist) {
       fs.readFile(`data/${queryData.id}`, "UTF-8", function (err, description) {
         let title = queryData.id;
-        let list = templateList(filelist);
-        let template = templateHTML(
+        let list = template.list(filelist);
+        let html = template.HTML(
           title,
           list,
           `
@@ -142,7 +144,7 @@ let app = http.createServer(function (request, response) {
           `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`
         );
         response.writeHead(200);
-        response.end(template);
+        response.end(html);
       });
     });
   } else if (pathname === "/update_process") {
