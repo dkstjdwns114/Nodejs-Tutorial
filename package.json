@@ -1,0 +1,25 @@
+{
+  "name": "web2-nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dkstjdwns114/Nodejs-Tutorial.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dkstjdwns114/Nodejs-Tutorial/issues"
+  },
+  "homepage": "https://github.com/dkstjdwns114/Nodejs-Tutorial#readme",
+  "dependencies": {
+    "sanitize-html": "^2.1.2"
+  }
+}
