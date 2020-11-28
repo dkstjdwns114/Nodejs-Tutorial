@@ -3,7 +3,6 @@ let fs = require("fs");
 let url = require("url");
 let qs = require("querystring");
 let path = require("path");
-
 let template = require("./lib/template.js");
 
 let app = http.createServer(function (request, response) {
