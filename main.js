@@ -4,6 +4,7 @@ let url = require("url");
 let qs = require("querystring");
 let path = require("path");
 let template = require("./lib/template.js");
+let sanitizeHtml = require("sanitize-html");
 
 let app = http.createServer(function (request, response) {
   if (request.url === "/favicon.ico") {
@@ -35,15 +36,19 @@ let app = http.createServer(function (request, response) {
         let filteredId = path.parse(queryData.id).base;
         fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
           let title = queryData.id;
+          let sanitizedTitle = sanitizeHtml(title);
+          let sanitizedDescriptioni = sanitizeHtml(description, {
+            allowedTags: ["h1"]
+          });
           let list = template.list(filelist);
           let html = template.HTML(
             title,
             list,
-            `<h2>${title}</h2>${description}`,
+            `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
             `<a href="/create">create</a> 
-              <a href="/update?id=${title}">update</a> 
+              <a href="/update?id=${sanitizedTitle}">update</a> 
               <form action="delete_process" method="post">
-                <input type="hidden" name="id" value="${title}" />
+                <input type="hidden" name="id" value="${sanitizedTitle}" />
                 <input type="submit" value="delete" />
               </form>
               `
