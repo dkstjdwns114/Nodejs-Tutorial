@@ -5,6 +5,20 @@ let qs = require("querystring");
 let path = require("path");
 let template = require("./lib/template.js");
 let sanitizeHtml = require("sanitize-html");
+let cookie = require("cookie");
+
+function authIsOwner(request, response) {
+  let isOwner = false;
+  let cookies = {};
+  if (request.headers.cookie) {
+    cookies = cookie.parse(request.headers.cookie);
+  }
+  if (cookies.email === "apple@apple.com" && cookies.password === "1234") {
+    isOwner = true;
+  }
+
+  return isOwner;
+}
 
 let app = http.createServer(function (request, response) {
   if (request.url === "/favicon.ico") {
@@ -14,6 +28,8 @@ let app = http.createServer(function (request, response) {
   let _url = request.url;
   let queryData = url.parse(_url, true).query;
   let pathname = url.parse(_url, true).pathname;
+  let isOwner = authIsOwner(request, response);
+  console.log(`isOwner : ${isOwner}`);
 
   if (pathname === "/") {
     if (queryData.id === undefined) {
