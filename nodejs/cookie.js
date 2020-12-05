@@ -14,7 +14,9 @@ http
         "tasty_cookie=strawberry",
         `Permanent=cookies; Max-Age=${60 * 60 * 24 * 30}`,
         "Secure=Secure; Sequre",
-        "HttpOnly=HttpOnly; HttpOnly"
+        "HttpOnly=HttpOnly; HttpOnly",
+        "Path=Path; Path=/cookie",
+        "Domain=Domain; Domain=o2.org"
       ]
     });
     response.end("Cookie!!");
