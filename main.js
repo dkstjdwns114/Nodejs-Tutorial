@@ -82,6 +82,10 @@ let app = http.createServer(function (request, response) {
       });
     }
   } else if (pathname === "/create") {
+    if (authIsOwner(request, response) === false) {
+      response.end("Login required!!");
+      return false;
+    }
     fs.readdir("./data", function (error, filelist) {
       let title = "WEB - create";
       let list = template.list(filelist);
@@ -106,6 +110,10 @@ let app = http.createServer(function (request, response) {
       response.end(html);
     });
   } else if (pathname === "/create_process") {
+    if (authIsOwner(request, response) === false) {
+      response.end("Login required!!");
+      return false;
+    }
     let body = "";
     request.on("data", function (data) {
       body += data;
@@ -120,6 +128,10 @@ let app = http.createServer(function (request, response) {
       });
     });
   } else if (pathname === "/update") {
+    if (authIsOwner(request, response) === false) {
+      response.end("Login required!!");
+      return false;
+    }
     fs.readdir("./data", function (error, filelist) {
       let filteredId = path.parse(queryData.id).base;
       fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
@@ -148,6 +160,10 @@ let app = http.createServer(function (request, response) {
       });
     });
   } else if (pathname === "/update_process") {
+    if (authIsOwner(request, response) === false) {
+      response.end("Login required!!");
+      return false;
+    }
     let body = "";
     request.on("data", function (data) {
       body += data;
@@ -165,6 +181,14 @@ let app = http.createServer(function (request, response) {
       });
     });
   } else if (pathname === "/delete_process") {
+    if (authIsOwner(request, response) === false) {
+      response.end("Login required!!");
+      return false;
+    }
+    if (authIsOwner(request, response) === false) {
+      response.end("Login required!!");
+      return false;
+    }
     let body = "";
     request.on("data", function (data) {
       body += data;
