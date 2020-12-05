@@ -153,6 +153,24 @@ let app = http.createServer(function (request, response) {
         response.end();
       });
     });
+  } else if (pathname === "/login") {
+    fs.readdir("./data", function (error, filelist) {
+      let title = "Login";
+      let list = template.list(filelist);
+      let html = template.HTML(
+        title,
+        list,
+        `<form action="login_process" method="post">
+          <p><input type="text" name="email" placeholder="email"></p>
+          <p><input type="password" name="password" placeholder="password"></p>
+          <p><input type="submit"></p>
+         </form>
+        `,
+        `<a href="/create">create</a>`
+      );
+      response.writeHead(200);
+      response.end(html);
+    });
   } else {
     response.writeHead(404);
     response.end("Not found");
