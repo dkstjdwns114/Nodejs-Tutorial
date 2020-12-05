@@ -16,8 +16,15 @@ function authIsOwner(request, response) {
   if (cookies.email === "apple@apple.com" && cookies.password === "1234") {
     isOwner = true;
   }
-
   return isOwner;
+}
+
+function authStatusUI(request, response) {
+  let authStatusUI = '<a href="/login">login</a>';
+  if (authIsOwner(request, response)) {
+    authStatusUI = `apple님 환영합니다. <a href="/logout_process">logout</a>`;
+  }
+  return authStatusUI;
 }
 
 let app = http.createServer(function (request, response) {
@@ -28,8 +35,6 @@ let app = http.createServer(function (request, response) {
   let _url = request.url;
   let queryData = url.parse(_url, true).query;
   let pathname = url.parse(_url, true).pathname;
-  let isOwner = authIsOwner(request, response);
-  console.log(`isOwner : ${isOwner}`);
 
   if (pathname === "/") {
     if (queryData.id === undefined) {
@@ -42,7 +47,8 @@ let app = http.createServer(function (request, response) {
           title,
           list,
           `<h2>${title}</h2>${description}`,
-          `<a href="/create">create</a>`
+          `<a href="/create">create</a>`,
+          authStatusUI(request, response)
         );
         response.writeHead(200);
         response.end(html);
@@ -67,7 +73,8 @@ let app = http.createServer(function (request, response) {
                 <input type="hidden" name="id" value="${sanitizedTitle}" />
                 <input type="submit" value="delete" />
               </form>
-              `
+              `,
+            authStatusUI(request, response)
           );
           response.writeHead(200);
           response.end(html);
@@ -92,7 +99,8 @@ let app = http.createServer(function (request, response) {
           </p>
         </form>
         `,
-        " "
+        "",
+        authStatusUI(request, response)
       );
       response.writeHead(200);
       response.end(html);
@@ -132,7 +140,8 @@ let app = http.createServer(function (request, response) {
             </p>
           </form>
           `,
-          `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`
+          `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`,
+          authStatusUI(request, response)
         );
         response.writeHead(200);
         response.end(html);
