@@ -3,6 +3,8 @@ const app = express();
 const port = 3000;
 let fs = require("fs");
 let template = require("./lib/template.js");
+let path = require("path");
+let sanitizeHtml = require("sanitize-html");
 
 function authIsOwner(request, response) {
   let isOwner = false;
@@ -43,7 +45,31 @@ app.get("/", (request, response) => {
 });
 
 app.get("/page/:pageId", (request, response) => {
-  response.send(request.params);
+  fs.readdir("./data", function (error, filelist) {
+    let filteredId = path.parse(request.params.pageId).base;
+    fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
+      let title = request.params.pageId;
+      let sanitizedTitle = sanitizeHtml(title);
+      let sanitizedDescriptioni = sanitizeHtml(description, {
+        allowedTags: ["h1"]
+      });
+      let list = template.list(filelist);
+      let html = template.HTML(
+        title,
+        list,
+        `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
+        `<a href="/create">create</a> 
+          <a href="/update?id=${sanitizedTitle}">update</a> 
+          <form action="delete_process" method="post">
+            <input type="hidden" name="id" value="${sanitizedTitle}" />
+            <input type="submit" value="delete" />
+          </form>
+          `,
+        authStatusUI(request, response)
+      );
+      response.send(html);
+    });
+  });
 });
 
 app.listen(port, () => {
@@ -52,33 +78,9 @@ app.listen(port, () => {
 
 /*
 let http = require("http");
-let fs = require("fs");
 let url = require("url");
 let qs = require("querystring");
-let path = require("path");
-let template = require("./lib/template.js");
-let sanitizeHtml = require("sanitize-html");
 let cookie = require("cookie");
-
-function authIsOwner(request, response) {
-  let isOwner = false;
-  let cookies = {};
-  if (request.headers.cookie) {
-    cookies = cookie.parse(request.headers.cookie);
-  }
-  if (cookies.email === "apple@apple.com" && cookies.password === "1234") {
-    isOwner = true;
-  }
-  return isOwner;
-}
-
-function authStatusUI(request, response) {
-  let authStatusUI = '<a href="/login">login</a>';
-  if (authIsOwner(request, response)) {
-    authStatusUI = `apple님 환영합니다. <a href="/logout_process">logout</a>`;
-  }
-  return authStatusUI;
-}
 
 let app = http.createServer(function (request, response) {
   if (request.url === "/favicon.ico") {
@@ -91,21 +93,6 @@ let app = http.createServer(function (request, response) {
 
   if (pathname === "/") {
     if (queryData.id === undefined) {
-      fs.readdir("./data", function (error, filelist) {
-        let title = "Welcome";
-        let description = "Hello, Node.js";
-
-        let list = template.list(filelist);
-        let html = template.HTML(
-          title,
-          list,
-          `<h2>${title}</h2>${description}`,
-          `<a href="/create">create</a>`,
-          authStatusUI(request, response)
-        );
-        response.writeHead(200);
-        response.end(html);
-      });
     } else {
       fs.readdir("./data", function (error, filelist) {
         let filteredId = path.parse(queryData.id).base;
