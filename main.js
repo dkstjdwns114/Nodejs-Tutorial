@@ -6,6 +6,7 @@ let template = require("./lib/template.js");
 let path = require("path");
 let sanitizeHtml = require("sanitize-html");
 let qs = require("querystring");
+let cookie = require("cookie");
 
 function authIsOwner(request, response) {
   let isOwner = false;
@@ -122,6 +123,67 @@ app.post("/create_process", (request, response) => {
   });
 });
 
+app.get("/login", (request, response) => {
+  fs.readdir("./data", function (error, filelist) {
+    let title = "Login";
+    let list = template.list(filelist);
+    let html = template.HTML(
+      title,
+      list,
+      `<form action="login_process" method="post">
+        <p><input type="text" name="email" placeholder="email"></p>
+        <p><input type="password" name="password" placeholder="password"></p>
+        <p><input type="submit"></p>
+       </form>
+      `,
+      `<a href="/create">create</a>`
+    );
+    response.send(html);
+  });
+});
+
+app.post("/login_process", (request, response) => {
+  let body = "";
+  request.on("data", function (data) {
+    body += data;
+  });
+  request.on("end", function () {
+    let post = qs.parse(body);
+    if (post.email === "apple@apple.com" && post.password === "1234") {
+      response.writeHead(302, {
+        "Set-Cookie": [
+          `email=${post.email}`,
+          `password=${post.password}`,
+          `nickname=apple`
+        ],
+        Location: `/`
+      });
+      response.end();
+    } else {
+      response.end("Who are you?");
+    }
+  });
+});
+
+app.get("/logout_process", (request, response) => {
+  let body = "";
+  request.on("data", function (data) {
+    body += data;
+  });
+  request.on("end", function () {
+    let post = qs.parse(body);
+    response.writeHead(302, {
+      "Set-Cookie": [
+        `email=; Max-Age=0`,
+        `password=; Max-Age=0`,
+        `nickname=; Max-Age=0`
+      ],
+      Location: `/`
+    });
+    response.end();
+  });
+});
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
@@ -129,7 +191,7 @@ app.listen(port, () => {
 /*
 let http = require("http");
 let url = require("url");
-let cookie = require("cookie");
+
 
 let app = http.createServer(function (request, response) {
   if (request.url === "/favicon.ico") {
@@ -144,51 +206,7 @@ let app = http.createServer(function (request, response) {
     if (queryData.id === undefined) {
     } else {
     } else if (pathname === "/create") {
-    if (authIsOwner(request, response) === false) {
-      response.end("Login required!!");
-      return false;
-    }
-    fs.readdir("./data", function (error, filelist) {
-      let title = "WEB - create";
-      let list = template.list(filelist);
-      let html = template.HTML(
-        title,
-        list,
-        `
-        <form action="/create_process" method="post">
-          <p><input type="text" name="title" placeholder="title" /></p>
-          <p>
-            <textarea name="description" placeholder="description"></textarea>
-          </p>
-          <p>
-            <input type="submit"/>
-          </p>
-        </form>
-        `,
-        "",
-        authStatusUI(request, response)
-      );
-      response.writeHead(200);
-      response.end(html);
-    });
   } else if (pathname === "/create_process") {
-    if (authIsOwner(request, response) === false) {
-      response.end("Login required!!");
-      return false;
-    }
-    let body = "";
-    request.on("data", function (data) {
-      body += data;
-    });
-    request.on("end", function () {
-      let post = qs.parse(body);
-      let title = post.title;
-      let description = post.description;
-      fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
-        response.writeHead(302, { Location: `/?id=${title}` });
-        response.end();
-      });
-    });
   } else if (pathname === "/update") {
     if (authIsOwner(request, response) === false) {
       response.end("Login required!!");
@@ -265,61 +283,8 @@ let app = http.createServer(function (request, response) {
       });
     });
   } else if (pathname === "/login") {
-    fs.readdir("./data", function (error, filelist) {
-      let title = "Login";
-      let list = template.list(filelist);
-      let html = template.HTML(
-        title,
-        list,
-        `<form action="login_process" method="post">
-          <p><input type="text" name="email" placeholder="email"></p>
-          <p><input type="password" name="password" placeholder="password"></p>
-          <p><input type="submit"></p>
-         </form>
-        `,
-        `<a href="/create">create</a>`
-      );
-      response.writeHead(200);
-      response.end(html);
-    });
   } else if (pathname === "/login_process") {
-    let body = "";
-    request.on("data", function (data) {
-      body += data;
-    });
-    request.on("end", function () {
-      let post = qs.parse(body);
-      if (post.email === "apple@apple.com" && post.password === "1234") {
-        response.writeHead(302, {
-          "Set-Cookie": [
-            `email=${post.email}`,
-            `password=${post.password}`,
-            `nickname=apple`
-          ],
-          Location: `/`
-        });
-        response.end();
-      } else {
-        response.end("Who are you?");
-      }
-    });
   } else if (pathname === "/logout_process") {
-    let body = "";
-    request.on("data", function (data) {
-      body += data;
-    });
-    request.on("end", function () {
-      let post = qs.parse(body);
-      response.writeHead(302, {
-        "Set-Cookie": [
-          `email=; Max-Age=0`,
-          `password=; Max-Age=0`,
-          `nickname=; Max-Age=0`
-        ],
-        Location: `/`
-      });
-      response.end();
-    });
   } else {
     response.writeHead(404);
     response.end("Not found");
