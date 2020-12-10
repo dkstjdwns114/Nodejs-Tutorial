@@ -61,7 +61,7 @@ app.get("/page/:pageId", (request, response) => {
         list,
         `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
         `<a href="/create">create</a> 
-          <a href="/update?id=${sanitizedTitle}">update</a> 
+          <a href="/update/${sanitizedTitle}">update</a> 
           <form action="delete_process" method="post">
             <input type="hidden" name="id" value="${sanitizedTitle}" />
             <input type="submit" value="delete" />
@@ -75,10 +75,10 @@ app.get("/page/:pageId", (request, response) => {
 });
 
 app.get("/create", (request, response) => {
-  // if (authIsOwner(request, response) === false) {
-  //   response.end("Login required!!");
-  //   return false;
-  // }
+  if (authIsOwner(request, response) === false) {
+    response.end("Login required!!");
+    return false;
+  }
   fs.readdir("./data", function (error, filelist) {
     let title = "WEB - create";
     let list = template.list(filelist);
@@ -104,10 +104,10 @@ app.get("/create", (request, response) => {
 });
 
 app.post("/create_process", (request, response) => {
-  // if (authIsOwner(request, response) === false) {
-  //   response.end("Login required!!");
-  //   return false;
-  // }
+  if (authIsOwner(request, response) === false) {
+    response.end("Login required!!");
+    return false;
+  }
   let body = "";
   request.on("data", function (data) {
     body += data;
@@ -117,7 +117,7 @@ app.post("/create_process", (request, response) => {
     let title = post.title;
     let description = post.description;
     fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
-      response.writeHead(302, { Location: `/?id=${title}` });
+      response.writeHead(302, { Location: `/page/${title}` });
       response.end();
     });
   });
@@ -184,6 +184,62 @@ app.get("/logout_process", (request, response) => {
   });
 });
 
+app.get("/update/:pageId", (request, response) => {
+  if (authIsOwner(request, response) === false) {
+    response.end("Login required!!");
+    return false;
+  }
+  fs.readdir("./data", function (error, filelist) {
+    let filteredId = path.parse(request.params.pageId).base;
+    fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
+      let title = request.params.pageId;
+      let list = template.list(filelist);
+      let html = template.HTML(
+        title,
+        list,
+        `
+        <form action="/update_process" method="post">
+          <input type="hidden" name="id" value="${title}" />
+          <p><input type="text" name="title" placeholder="title" value="${title}" /></p>
+          <p>
+            <textarea name="description" placeholder="description">${description}</textarea>
+          </p>
+          <p>
+            <input type="submit"/>
+          </p>
+        </form>
+        `,
+        `<a href="/create">create</a> <a href="/update/${title}">update</a>`,
+        authStatusUI(request, response)
+      );
+      response.send(html);
+    });
+  });
+});
+
+app.post("/update_process", (request, response) => {
+  if (authIsOwner(request, response) === false) {
+    response.end("Login required!!");
+    return false;
+  }
+  let body = "";
+  request.on("data", function (data) {
+    body += data;
+  });
+  request.on("end", function () {
+    let post = qs.parse(body);
+    let id = post.id;
+    let title = post.title;
+    let description = post.description;
+    fs.rename(`data/${id}`, `data/${title}`, function (error) {
+      fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
+        response.writeHead(302, { Location: `/page/${title}` });
+        response.end();
+      });
+    });
+  });
+});
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
@@ -208,58 +264,7 @@ let app = http.createServer(function (request, response) {
     } else if (pathname === "/create") {
   } else if (pathname === "/create_process") {
   } else if (pathname === "/update") {
-    if (authIsOwner(request, response) === false) {
-      response.end("Login required!!");
-      return false;
-    }
-    fs.readdir("./data", function (error, filelist) {
-      let filteredId = path.parse(queryData.id).base;
-      fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
-        let title = queryData.id;
-        let list = template.list(filelist);
-        let html = template.HTML(
-          title,
-          list,
-          `
-          <form action="/update_process" method="post">
-            <input type="hidden" name="id" value="${title}" />
-            <p><input type="text" name="title" placeholder="title" value="${title}" /></p>
-            <p>
-              <textarea name="description" placeholder="description">${description}</textarea>
-            </p>
-            <p>
-              <input type="submit"/>
-            </p>
-          </form>
-          `,
-          `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`,
-          authStatusUI(request, response)
-        );
-        response.writeHead(200);
-        response.end(html);
-      });
-    });
   } else if (pathname === "/update_process") {
-    if (authIsOwner(request, response) === false) {
-      response.end("Login required!!");
-      return false;
-    }
-    let body = "";
-    request.on("data", function (data) {
-      body += data;
-    });
-    request.on("end", function () {
-      let post = qs.parse(body);
-      let id = post.id;
-      let title = post.title;
-      let description = post.description;
-      fs.rename(`data/${id}`, `data/${title}`, function (error) {
-        fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
-          response.writeHead(302, { Location: `/?id=${title}` });
-          response.end();
-        });
-      });
-    });
   } else if (pathname === "/delete_process") {
     if (authIsOwner(request, response) === false) {
       response.end("Login required!!");
