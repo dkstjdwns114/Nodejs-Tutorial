@@ -10,6 +10,7 @@ let cookie = require("cookie");
 let bodyParser = require("body-parser");
 let compression = require("compression");
 
+app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
 app.get("*", function (request, response, next) {
@@ -47,7 +48,9 @@ app.get("/", (request, response) => {
   let html = template.HTML(
     title,
     list,
-    `<h2>${title}</h2>${description}`,
+    `<h2>${title}</h2>${description}
+    <img src="/images/jisoo.png" style="width: 330px; display: block; margin-top: 20px;">
+    `,
     `<a href="/create">create</a>`,
     authStatusUI(request, response)
   );
