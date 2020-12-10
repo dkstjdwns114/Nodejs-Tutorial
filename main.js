@@ -5,6 +5,7 @@ let fs = require("fs");
 let template = require("./lib/template.js");
 let path = require("path");
 let sanitizeHtml = require("sanitize-html");
+let qs = require("querystring");
 
 function authIsOwner(request, response) {
   let isOwner = false;
@@ -72,6 +73,55 @@ app.get("/page/:pageId", (request, response) => {
   });
 });
 
+app.get("/create", (request, response) => {
+  // if (authIsOwner(request, response) === false) {
+  //   response.end("Login required!!");
+  //   return false;
+  // }
+  fs.readdir("./data", function (error, filelist) {
+    let title = "WEB - create";
+    let list = template.list(filelist);
+    let html = template.HTML(
+      title,
+      list,
+      `
+      <form action="/create_process" method="post">
+        <p><input type="text" name="title" placeholder="title" /></p>
+        <p>
+          <textarea name="description" placeholder="description"></textarea>
+        </p>
+        <p>
+          <input type="submit"/>
+        </p>
+      </form>
+      `,
+      "",
+      authStatusUI(request, response)
+    );
+    response.send(html);
+  });
+});
+
+app.post("/create_process", (request, response) => {
+  // if (authIsOwner(request, response) === false) {
+  //   response.end("Login required!!");
+  //   return false;
+  // }
+  let body = "";
+  request.on("data", function (data) {
+    body += data;
+  });
+  request.on("end", function () {
+    let post = qs.parse(body);
+    let title = post.title;
+    let description = post.description;
+    fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
+      response.writeHead(302, { Location: `/?id=${title}` });
+      response.end();
+    });
+  });
+});
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
@@ -79,7 +129,6 @@ app.listen(port, () => {
 /*
 let http = require("http");
 let url = require("url");
-let qs = require("querystring");
 let cookie = require("cookie");
 
 let app = http.createServer(function (request, response) {
@@ -94,34 +143,7 @@ let app = http.createServer(function (request, response) {
   if (pathname === "/") {
     if (queryData.id === undefined) {
     } else {
-      fs.readdir("./data", function (error, filelist) {
-        let filteredId = path.parse(queryData.id).base;
-        fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
-          let title = queryData.id;
-          let sanitizedTitle = sanitizeHtml(title);
-          let sanitizedDescriptioni = sanitizeHtml(description, {
-            allowedTags: ["h1"]
-          });
-          let list = template.list(filelist);
-          let html = template.HTML(
-            title,
-            list,
-            `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
-            `<a href="/create">create</a> 
-              <a href="/update?id=${sanitizedTitle}">update</a> 
-              <form action="delete_process" method="post">
-                <input type="hidden" name="id" value="${sanitizedTitle}" />
-                <input type="submit" value="delete" />
-              </form>
-              `,
-            authStatusUI(request, response)
-          );
-          response.writeHead(200);
-          response.end(html);
-        });
-      });
-    }
-  } else if (pathname === "/create") {
+    } else if (pathname === "/create") {
     if (authIsOwner(request, response) === false) {
       response.end("Login required!!");
       return false;
