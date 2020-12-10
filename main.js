@@ -8,8 +8,10 @@ let sanitizeHtml = require("sanitize-html");
 let qs = require("querystring");
 let cookie = require("cookie");
 let bodyParser = require("body-parser");
+let compression = require("compression");
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(compression());
 
 function authIsOwner(request, response) {
   let isOwner = false;
@@ -260,36 +262,3 @@ app.get("/logout_process", (request, response) => {
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
-
-/*
-let http = require("http");
-let url = require("url");
-
-
-let app = http.createServer(function (request, response) {
-  if (request.url === "/favicon.ico") {
-    response.writeHead(200, { "Content-Type": "image/x-icon" });
-    return response.end();
-  }
-  let _url = request.url;
-  let queryData = url.parse(_url, true).query;
-  let pathname = url.parse(_url, true).pathname;
-
-  if (pathname === "/") {
-    if (queryData.id === undefined) {
-    } else {
-    } else if (pathname === "/create") {
-  } else if (pathname === "/create_process") {
-  } else if (pathname === "/update") {
-  } else if (pathname === "/update_process") {
-  } else if (pathname === "/delete_process") {
-  } else if (pathname === "/login") {
-  } else if (pathname === "/login_process") {
-  } else if (pathname === "/logout_process") {
-  } else {
-    response.writeHead(404);
-    response.end("Not found");
-  }
-});
-app.listen(3000);
-*/
