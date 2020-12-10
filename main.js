@@ -57,29 +57,33 @@ app.get("/", (request, response) => {
   response.send(html);
 });
 
-app.get("/page/:pageId", (request, response) => {
+app.get("/page/:pageId", (request, response, next) => {
   let filteredId = path.parse(request.params.pageId).base;
   fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
-    let title = request.params.pageId;
-    let sanitizedTitle = sanitizeHtml(title);
-    let sanitizedDescriptioni = sanitizeHtml(description, {
-      allowedTags: ["h1"]
-    });
-    let list = template.list(request.list);
-    let html = template.HTML(
-      title,
-      list,
-      `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
-      `<a href="/create">create</a> 
-          <a href="/update/${sanitizedTitle}">update</a> 
-          <form action="/delete_process" method="post">
-            <input type="hidden" name="id" value="${sanitizedTitle}" />
-            <input type="submit" value="delete" />
-          </form>
-          `,
-      authStatusUI(request, response)
-    );
-    response.send(html);
+    if (err) {
+      next(err);
+    } else {
+      let title = request.params.pageId;
+      let sanitizedTitle = sanitizeHtml(title);
+      let sanitizedDescriptioni = sanitizeHtml(description, {
+        allowedTags: ["h1"]
+      });
+      let list = template.list(request.list);
+      let html = template.HTML(
+        title,
+        list,
+        `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
+        `<a href="/create">create</a> 
+            <a href="/update/${sanitizedTitle}">update</a> 
+            <form action="/delete_process" method="post">
+              <input type="hidden" name="id" value="${sanitizedTitle}" />
+              <input type="submit" value="delete" />
+            </form>
+            `,
+        authStatusUI(request, response)
+      );
+      response.send(html);
+    }
   });
 });
 
@@ -257,6 +261,15 @@ app.get("/logout_process", (request, response) => {
     });
     response.end();
   });
+});
+
+app.use(function (req, res, next) {
+  res.status(404).send("Sorry cant find that!");
+});
+
+app.use(function (err, req, res, next) {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
 });
 
 app.listen(port, () => {
