@@ -62,7 +62,7 @@ app.get("/page/:pageId", (request, response) => {
         `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
         `<a href="/create">create</a> 
           <a href="/update/${sanitizedTitle}">update</a> 
-          <form action="delete_process" method="post">
+          <form action="/delete_process" method="post">
             <input type="hidden" name="id" value="${sanitizedTitle}" />
             <input type="submit" value="delete" />
           </form>
@@ -117,8 +117,7 @@ app.post("/create_process", (request, response) => {
     let title = post.title;
     let description = post.description;
     fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
-      response.writeHead(302, { Location: `/page/${title}` });
-      response.end();
+      response.redirect(`/page/${title}`);
     });
   });
 });
@@ -233,9 +232,31 @@ app.post("/update_process", (request, response) => {
     let description = post.description;
     fs.rename(`data/${id}`, `data/${title}`, function (error) {
       fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
-        response.writeHead(302, { Location: `/page/${title}` });
-        response.end();
+        response.redirect(`/page/${title}`);
       });
+    });
+  });
+});
+
+app.post("/delete_process", (request, response) => {
+  if (authIsOwner(request, response) === false) {
+    response.end("Login required!!");
+    return false;
+  }
+  if (authIsOwner(request, response) === false) {
+    response.end("Login required!!");
+    return false;
+  }
+  let body = "";
+  request.on("data", function (data) {
+    body += data;
+  });
+  request.on("end", function () {
+    let post = qs.parse(body);
+    let id = post.id;
+    let filteredId = path.parse(id).base;
+    fs.unlink(`data/${filteredId}`, function (error) {
+      response.redirect("/");
     });
   });
 });
@@ -266,27 +287,6 @@ let app = http.createServer(function (request, response) {
   } else if (pathname === "/update") {
   } else if (pathname === "/update_process") {
   } else if (pathname === "/delete_process") {
-    if (authIsOwner(request, response) === false) {
-      response.end("Login required!!");
-      return false;
-    }
-    if (authIsOwner(request, response) === false) {
-      response.end("Login required!!");
-      return false;
-    }
-    let body = "";
-    request.on("data", function (data) {
-      body += data;
-    });
-    request.on("end", function () {
-      let post = qs.parse(body);
-      let id = post.id;
-      let filteredId = path.parse(id).base;
-      fs.unlink(`data/${filteredId}`, function (error) {
-        response.writeHead(302, { Location: `/` });
-        response.end();
-      });
-    });
   } else if (pathname === "/login") {
   } else if (pathname === "/login_process") {
   } else if (pathname === "/logout_process") {
