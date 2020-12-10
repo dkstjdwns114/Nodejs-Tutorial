@@ -51,43 +51,13 @@ app.get("/", (request, response) => {
     `<h2>${title}</h2>${description}
     <img src="/images/jisoo.png" style="width: 330px; display: block; margin-top: 20px;">
     `,
-    `<a href="/create">create</a>`,
+    `<a href="/topic/create">create</a>`,
     authStatusUI(request, response)
   );
   response.send(html);
 });
 
-app.get("/page/:pageId", (request, response, next) => {
-  let filteredId = path.parse(request.params.pageId).base;
-  fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
-    if (err) {
-      next(err);
-    } else {
-      let title = request.params.pageId;
-      let sanitizedTitle = sanitizeHtml(title);
-      let sanitizedDescriptioni = sanitizeHtml(description, {
-        allowedTags: ["h1"]
-      });
-      let list = template.list(request.list);
-      let html = template.HTML(
-        title,
-        list,
-        `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
-        `<a href="/create">create</a> 
-            <a href="/update/${sanitizedTitle}">update</a> 
-            <form action="/delete_process" method="post">
-              <input type="hidden" name="id" value="${sanitizedTitle}" />
-              <input type="submit" value="delete" />
-            </form>
-            `,
-        authStatusUI(request, response)
-      );
-      response.send(html);
-    }
-  });
-});
-
-app.get("/create", (request, response) => {
+app.get("/topic/create", (request, response) => {
   if (authIsOwner(request, response) === false) {
     response.end("Login required!!");
     return false;
@@ -98,7 +68,7 @@ app.get("/create", (request, response) => {
     title,
     list,
     `
-      <form action="/create_process" method="post">
+      <form action="/topic/create_process" method="post">
         <p><input type="text" name="title" placeholder="title" /></p>
         <p>
           <textarea name="description" placeholder="description"></textarea>
@@ -114,35 +84,16 @@ app.get("/create", (request, response) => {
   response.send(html);
 });
 
-app.post("/create_process", (request, response) => {
-  /*
-  if (authIsOwner(request, response) === false) {
-    response.end("Login required!!");
-    return false;
-  }
-  let body = "";
-  request.on("data", function (data) {
-    body += data;
-  });
-  request.on("end", function () {
-    let post = qs.parse(body);
-    let title = post.title;
-    let description = post.description;
-    fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
-      response.redirect(`/page/${title}`);
-    });
-  });
-  */
-
+app.post("/topic/create_process", (request, response) => {
   let post = request.body;
   let title = post.title;
   let description = post.description;
   fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
-    response.redirect(`/page/${title}`);
+    response.redirect(`/topic/${title}`);
   });
 });
 
-app.get("/update/:pageId", (request, response) => {
+app.get("/topic/update/:pageId", (request, response) => {
   if (authIsOwner(request, response) === false) {
     response.end("Login required!!");
     return false;
@@ -155,7 +106,7 @@ app.get("/update/:pageId", (request, response) => {
       title,
       list,
       `
-        <form action="/update_process" method="post">
+        <form action="/topic/update_process" method="post">
           <input type="hidden" name="id" value="${title}" />
           <p><input type="text" name="title" placeholder="title" value="${title}" /></p>
           <p>
@@ -166,14 +117,14 @@ app.get("/update/:pageId", (request, response) => {
           </p>
         </form>
         `,
-      `<a href="/create">create</a> <a href="/update/${title}">update</a>`,
+      `<a href="/topic/create">create</a> <a href="/topic/update/${title}">update</a>`,
       authStatusUI(request, response)
     );
     response.send(html);
   });
 });
 
-app.post("/update_process", (request, response) => {
+app.post("/topic/update_process", (request, response) => {
   if (authIsOwner(request, response) === false) {
     response.end("Login required!!");
     return false;
@@ -184,12 +135,12 @@ app.post("/update_process", (request, response) => {
   let description = post.description;
   fs.rename(`data/${id}`, `data/${title}`, function (error) {
     fs.writeFile(`data/${title}`, description, "UTF-8", function (err) {
-      response.redirect(`/page/${title}`);
+      response.redirect(`/topic/${title}`);
     });
   });
 });
 
-app.post("/delete_process", (request, response) => {
+app.post("/topic/delete_process", (request, response) => {
   if (authIsOwner(request, response) === false) {
     response.end("Login required!!");
     return false;
@@ -215,51 +166,68 @@ app.get("/login", (request, response) => {
         <p><input type="submit"></p>
        </form>
       `,
-      `<a href="/create">create</a>`
+      `<a href="/topic/create">create</a>`
     );
     response.send(html);
   });
 });
 
 app.post("/login_process", (request, response) => {
-  let body = "";
-  request.on("data", function (data) {
-    body += data;
-  });
-  request.on("end", function () {
-    let post = qs.parse(body);
-    if (post.email === "apple@apple.com" && post.password === "1234") {
-      response.writeHead(302, {
-        "Set-Cookie": [
-          `email=${post.email}`,
-          `password=${post.password}`,
-          `nickname=apple`
-        ],
-        Location: `/`
-      });
-      response.end();
-    } else {
-      response.end("Who are you?");
-    }
-  });
-});
-
-app.get("/logout_process", (request, response) => {
-  let body = "";
-  request.on("data", function (data) {
-    body += data;
-  });
-  request.on("end", function () {
-    let post = qs.parse(body);
+  let post = request.body;
+  if (post.email === "apple@apple.com" && post.password === "1234") {
     response.writeHead(302, {
       "Set-Cookie": [
-        `email=; Max-Age=0`,
-        `password=; Max-Age=0`,
-        `nickname=; Max-Age=0`
+        `email=${post.email}`,
+        `password=${post.password}`,
+        `nickname=apple`
       ],
       Location: `/`
     });
     response.end();
+  } else {
+    response.end("Who are you?");
+  }
+});
+
+app.get("/logout_process", (request, response) => {
+  response.writeHead(302, {
+    "Set-Cookie": [
+      `email=; Max-Age=0`,
+      `password=; Max-Age=0`,
+      `nickname=; Max-Age=0`
+    ],
+    Location: `/`
+  });
+  response.end();
+});
+
+app.get("/topic/:pageId", (request, response, next) => {
+  let filteredId = path.parse(request.params.pageId).base;
+  fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
+    if (err) {
+      next(err);
+    } else {
+      let title = request.params.pageId;
+      let sanitizedTitle = sanitizeHtml(title);
+      let sanitizedDescriptioni = sanitizeHtml(description, {
+        allowedTags: ["h1"]
+      });
+      let list = template.list(request.list);
+      let html = template.HTML(
+        title,
+        list,
+        `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
+        `<a href="/topic/create">create</a> 
+            <a href="/topic/update/${sanitizedTitle}">update</a> 
+            <form action="/topic/delete_process" method="post">
+              <input type="hidden" name="id" value="${sanitizedTitle}" />
+              <input type="submit" value="delete" />
+            </form>
+            `,
+        authStatusUI(request, response)
+      );
+      response.send(html);
+    }
   });
 });
 
