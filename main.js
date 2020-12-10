@@ -1,10 +1,45 @@
 const express = require("express");
 const app = express();
 const port = 3000;
+let fs = require("fs");
+let template = require("./lib/template.js");
+
+function authIsOwner(request, response) {
+  let isOwner = false;
+  let cookies = {};
+  if (request.headers.cookie) {
+    cookies = cookie.parse(request.headers.cookie);
+  }
+  if (cookies.email === "apple@apple.com" && cookies.password === "1234") {
+    isOwner = true;
+  }
+  return isOwner;
+}
+
+function authStatusUI(request, response) {
+  let authStatusUI = '<a href="/login">login</a>';
+  if (authIsOwner(request, response)) {
+    authStatusUI = `apple님 환영합니다. <a href="/logout_process">logout</a>`;
+  }
+  return authStatusUI;
+}
 
 // route, routing
-app.get("/", (req, res) => {
-  res.send("/");
+app.get("/", (request, response) => {
+  fs.readdir("./data", function (error, filelist) {
+    let title = "Welcome";
+    let description = "Hello, Node.js";
+
+    let list = template.list(filelist);
+    let html = template.HTML(
+      title,
+      list,
+      `<h2>${title}</h2>${description}`,
+      `<a href="/create">create</a>`,
+      authStatusUI(request, response)
+    );
+    response.send(html);
+  });
 });
 
 app.get("/page", (req, res) => {
@@ -14,6 +49,7 @@ app.get("/page", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
+
 /*
 let http = require("http");
 let fs = require("fs");
