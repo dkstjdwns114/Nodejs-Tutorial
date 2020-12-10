@@ -5,6 +5,8 @@ let bodyParser = require("body-parser");
 let compression = require("compression");
 let topicRouter = require("./routes/topic");
 let indexRouter = require("./routes/index");
+let helmet = require("helmet");
+app.use(helmet());
 
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: false }));
