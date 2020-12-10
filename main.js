@@ -12,6 +12,12 @@ let compression = require("compression");
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
+app.get("*", function (request, response, next) {
+  fs.readdir("./data", function (error, filelist) {
+    request.list = filelist;
+    next();
+  });
+});
 
 function authIsOwner(request, response) {
   let isOwner = false;
@@ -35,47 +41,42 @@ function authStatusUI(request, response) {
 
 // route, routing
 app.get("/", (request, response) => {
-  fs.readdir("./data", function (error, filelist) {
-    let title = "Welcome";
-    let description = "Hello, Node.js";
-
-    let list = template.list(filelist);
-    let html = template.HTML(
-      title,
-      list,
-      `<h2>${title}</h2>${description}`,
-      `<a href="/create">create</a>`,
-      authStatusUI(request, response)
-    );
-    response.send(html);
-  });
+  let title = "Welcome";
+  let description = "Hello, Node.js";
+  let list = template.list(request.list);
+  let html = template.HTML(
+    title,
+    list,
+    `<h2>${title}</h2>${description}`,
+    `<a href="/create">create</a>`,
+    authStatusUI(request, response)
+  );
+  response.send(html);
 });
 
 app.get("/page/:pageId", (request, response) => {
-  fs.readdir("./data", function (error, filelist) {
-    let filteredId = path.parse(request.params.pageId).base;
-    fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
-      let title = request.params.pageId;
-      let sanitizedTitle = sanitizeHtml(title);
-      let sanitizedDescriptioni = sanitizeHtml(description, {
-        allowedTags: ["h1"]
-      });
-      let list = template.list(filelist);
-      let html = template.HTML(
-        title,
-        list,
-        `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
-        `<a href="/create">create</a> 
+  let filteredId = path.parse(request.params.pageId).base;
+  fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
+    let title = request.params.pageId;
+    let sanitizedTitle = sanitizeHtml(title);
+    let sanitizedDescriptioni = sanitizeHtml(description, {
+      allowedTags: ["h1"]
+    });
+    let list = template.list(request.list);
+    let html = template.HTML(
+      title,
+      list,
+      `<h2>${sanitizedTitle}</h2>${sanitizedDescriptioni}`,
+      `<a href="/create">create</a> 
           <a href="/update/${sanitizedTitle}">update</a> 
           <form action="/delete_process" method="post">
             <input type="hidden" name="id" value="${sanitizedTitle}" />
             <input type="submit" value="delete" />
           </form>
           `,
-        authStatusUI(request, response)
-      );
-      response.send(html);
-    });
+      authStatusUI(request, response)
+    );
+    response.send(html);
   });
 });
 
@@ -84,13 +85,12 @@ app.get("/create", (request, response) => {
     response.end("Login required!!");
     return false;
   }
-  fs.readdir("./data", function (error, filelist) {
-    let title = "WEB - create";
-    let list = template.list(filelist);
-    let html = template.HTML(
-      title,
-      list,
-      `
+  let title = "WEB - create";
+  let list = template.list(request.list);
+  let html = template.HTML(
+    title,
+    list,
+    `
       <form action="/create_process" method="post">
         <p><input type="text" name="title" placeholder="title" /></p>
         <p>
@@ -101,11 +101,10 @@ app.get("/create", (request, response) => {
         </p>
       </form>
       `,
-      "",
-      authStatusUI(request, response)
-    );
-    response.send(html);
-  });
+    "",
+    authStatusUI(request, response)
+  );
+  response.send(html);
 });
 
 app.post("/create_process", (request, response) => {
@@ -141,15 +140,14 @@ app.get("/update/:pageId", (request, response) => {
     response.end("Login required!!");
     return false;
   }
-  fs.readdir("./data", function (error, filelist) {
-    let filteredId = path.parse(request.params.pageId).base;
-    fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
-      let title = request.params.pageId;
-      let list = template.list(filelist);
-      let html = template.HTML(
-        title,
-        list,
-        `
+  let filteredId = path.parse(request.params.pageId).base;
+  fs.readFile(`data/${filteredId}`, "UTF-8", function (err, description) {
+    let title = request.params.pageId;
+    let list = template.list(request.list);
+    let html = template.HTML(
+      title,
+      list,
+      `
         <form action="/update_process" method="post">
           <input type="hidden" name="id" value="${title}" />
           <p><input type="text" name="title" placeholder="title" value="${title}" /></p>
@@ -161,11 +159,10 @@ app.get("/update/:pageId", (request, response) => {
           </p>
         </form>
         `,
-        `<a href="/create">create</a> <a href="/update/${title}">update</a>`,
-        authStatusUI(request, response)
-      );
-      response.send(html);
-    });
+      `<a href="/create">create</a> <a href="/update/${title}">update</a>`,
+      authStatusUI(request, response)
+    );
+    response.send(html);
   });
 });
 
